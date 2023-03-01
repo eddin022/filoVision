@@ -7,7 +7,7 @@ filoVision contains two Google Colab notebooks, ["filoTips"](https://colab.resea
 Anyone who spends a considerable amount of time quantifying filopodia and commonly expresses fluorescent tip markers in their experiments. They should also be willing to spend initial time training a deep learning model using ZeroCostDL4Mic.
 
 ## Getting Started
-#### 1. Trial run a filoVision notebook using the provided [test data](https://drive.google.com/drive/folders/1D_v68KMmD1Hbbf1sJp1c-r2tO4aFMO6d?usp=sharing) and default models
+#### 1. Trial run a filoVision notebook using the provided [test data](https://drive.google.com/drive/folders/1D_v68KMmD1Hbbf1sJp1c-r2tO4aFMO6d?usp=sharing) and default models (not required)
 #### 2. Train custom filoVision models on the user's data with the [ZeroCostDL4Mic](https://github.com/HenriquesLab/ZeroCostDL4Mic) framework
 #### 3. Plug a custom model into one of the filoVision notebooks
 #### 4. Run a filoVision notebook on future data for automated filopodia quantitation
