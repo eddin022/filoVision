@@ -1,8 +1,9 @@
 # filoVision: a platform that uses deep learning and tip markers to automate filopodia quantitation
-<img src='https://user-images.githubusercontent.com/67563125/228642549-6a17d475-ebde-4338-a0d7-ed9ca3435fb1.jpg' />
   
 ## Description
 filoVision contains two Google Colab notebooks, ["filoTips"](https://colab.research.google.com/drive/1mL7U63-lltjMoTKgpcUbhK-iV0GoYz3L) and ["filoSkeleton"](https://colab.research.google.com/drive/1-61DTdWYXMIecJqjE5nWMFue2JJBbuBj), used to automate the tedious act of quantifying filopodia. filoTips was developed to analyze the filopodia of cells expressing a fluorescent tip marker without requiring a labeled cytoskeleton. filoSkeleton, on the other hand, combines tip markers and actin labeling for when either labeling method alone is unsuccessful.
+
+<img src='https://user-images.githubusercontent.com/67563125/228642549-6a17d475-ebde-4338-a0d7-ed9ca3435fb1.jpg' />
 
 ## Who should use this?
 Anyone who spends a considerable amount of time quantifying filopodia and commonly expresses fluorescent tip markers in their experiments. They should also be willing to spend initial time training a deep learning model using ZeroCostDL4Mic.
