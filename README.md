@@ -2,8 +2,7 @@
 
 <img src="https://user-images.githubusercontent.com/67563125/228630157-8abc693a-b55b-4c0b-864a-ec48a7ea4582.jpg" width="50%" height="50%">
 
-![Figure 4](https://user-images.githubusercontent.com/67563125/228630157-8abc693a-b55b-4c0b-864a-ec48a7ea4582.jpg)
-![Figure 8](https://user-images.githubusercontent.com/67563125/228630382-f2ffdbf9-6220-4900-ae03-11e6e9f64756.jpg)
+<img src='https://user-images.githubusercontent.com/67563125/228630382-f2ffdbf9-6220-4900-ae03-11e6e9f64756.jpg' width=50% height=50%>
 
 ## Description
 filoVision contains two Google Colab notebooks, ["filoTips"](https://colab.research.google.com/drive/1mL7U63-lltjMoTKgpcUbhK-iV0GoYz3L) and ["filoSkeleton"](https://colab.research.google.com/drive/1-61DTdWYXMIecJqjE5nWMFue2JJBbuBj), used to automate the tedious act of quantifying filopodia. filoTips was developed to analyze the filopodia of cells expressing a fluorescent tip marker without requiring a labeled cytoskeleton. filoSkeleton, on the other hand, combines tip markers and actin labeling for when either labeling method alone is unsuccessful.
