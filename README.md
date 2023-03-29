@@ -1,8 +1,8 @@
 # filoVision: a platform that uses deep learning and tip markers to automate filopodia quantitation
 
 <p float='left'>
-  <img src='https://user-images.githubusercontent.com/67563125/228632317-c942e2a6-c063-4b03-99ff-204119d917a5.jpg' width=50% height=50% />
-  <img src='https://user-images.githubusercontent.com/67563125/228630382-f2ffdbf9-6220-4900-ae03-11e6e9f64756.jpg' width=50% height=50% />
+  <img src='https://user-images.githubusercontent.com/67563125/228632317-c942e2a6-c063-4b03-99ff-204119d917a5.jpg' width=45% height=45% />
+  <img src='https://user-images.githubusercontent.com/67563125/228630382-f2ffdbf9-6220-4900-ae03-11e6e9f64756.jpg' width=45% height=45% />
 </p>
   
 ## Description
