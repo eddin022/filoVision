@@ -1,37 +1,17 @@
 #!/usr/bin/env python
+
+#@title 1) Provide information describing the data and load ZeroCostDL4Mic requirements (code modified slightly from "U-Net_2D_Multilabel" notebook)
+#code from ZeroCostDL4Mic 1.1
 from __future__ import print_function
-
-
-# ## filoTips Instructions:
-# 
-# 1.   Collect images of your cells making filopodia. Please provide one channel: fluorescent tip-enriched protein that robustly labels cell body and filopodia tips. Z-stack max projection recommended.
-# 1.   Click "Cell" in the toolbar above, then "Run All"
-# 1.   All cell headers (In [ ]:) should now contain an asterisk within the brackets, noting they are running either now or in the future. As the cells complete their runs, the asterisk in the cell headers (In [ * ]:) will be replaced in the order in which they ran (In [1]:, In [2]:, etc.). If a cell has completed a run then it should contain a number.
-# 1.   Please provide the input asked of you in cell 1.1. The first input will ask you to select the folder containing the images you want to analyze
-# 2.   If Custom model is selected, please provide: **a)** the Google Drive link to a **compressed (.zip) folder containing your model** (ex: "*1zh5j_VL380ebyQxDCJ5N2fhOxWqkFQsC*") and **b)** the model/zip file name ("*Stanley*"). This can be found by right clicking your .zip model, clicking "Share", then "Anyone with link", and finally "Copy Link". Paste it here, then remove all but the specific link which should look similar to the example link provided above.
-# 1.   Wait for all cells to run (From "In [*]:" to "In [num]:) and look for the "-- filoTips analysis complete --" prompt below cell 1.9. This indicates the analysis was a success.
-
-# ### Please provide all required user inputs below:
-# 
-# Micron/Pixel Ratio: Ratio of microns per pixel (commonly found in image metadata or can be found in ImageJ)\
-# \
-# Model Type: "Default" filoTips model, or "Custom" model that has been fine-tuned to user data\
-# \
-# filoSpace: Would you like inter-filopodial spacing information (Note: high image resolution recommended, experimental)\
-# \
-# Brief statistical summary: Would you like a limited statistical summary (ex. t-test, one-way anova, violin plots)? Must have 2-4 variables or experimental conditions to compare and each image file name must contain a unique string to assign to a specific group. That unique string must be provided for each variable/condition.\
-# \
-# Figure DPI: Please provide figure DPI. This will impact filoTips annotation resolution and can be adjusted accordingly. Recommended start value is "300". 
-
-# In[1]:
-
 
 #get filename and micron/pixel ratio
 from tkinter import Tk
 from tkinter.filedialog import askdirectory
 path = askdirectory(title='Select Folder') # shows dialog box and return the path
+print('')
 print(path+' selected as file path')
 
+#updated inputs
 print('')
 um_per_pixel = None
 while type(um_per_pixel) != float:
@@ -40,32 +20,56 @@ while type(um_per_pixel) != float:
         break
     except ValueError:
         print("Please enter a valid number...")
+print('')
+actin_channel = str(input('CELL BODY and filopodia STALK image extension. Must be found in all body and stalk image names: '))
+print('')
+filo_channel = str(input('FILOPODIA TIP image extension. Must be found in all filopodia tip image names: '))
+print('')
+RGB_insurance = input('Please make sure you also have an RGB image with CELL BODY, STALK, and TIPS combined into one. These images should have the extension "_RGB". Press enter only if you have channel-combined RGB images: ')
+print('')
+filo_name = str(input('Name of filopodia tip marker, (ex. Myo10): '))
 
-#what model should be used?
+#what models should be used?
+#cell and stalk model
+print('')
 model_type = None
-print('')
 while model_type not in {"Default", "Custom"}:
-    model_type = input('Model type, "Default" or "Custom": ')
-    if model_type not in {"Default", "Custom"}:
+    model_type = input('CELL BODY and STALK model type, "Default" or "Custom": ')
+    
+    if model_type in {"Default", "Custom"}:
+        if model_type == 'Default':
+            use_default_cell_model = True
+        if model_type == 'Custom':
+            use_default_cell_model = False
+            custom_cell_model_DriveLink= input('Please copy and paste the Google Drive link associated with your custom CELL BODY and STALK model: ')
+            temp = custom_cell_model_DriveLink.replace('https://drive.google.com/file/d/','')
+            temp = temp.replace('/view?usp=drive_link','')
+            temp = temp.replace('/view?usp=sharing','')
+            custom_cell_model_DriveLink = temp
+    else:
         print('Please type "Default" or "Custom" verbatim to note which model you want to use.')
-if model_type == 'Custom':
-    custom_model_DriveLink= input('Please copy and paste the Google DriveLink associated with your custom model: ')
-
-#do you want interfilopodial spacing information?    
-filoSpace = None
+#filopodia tip model
 print('')
-while filoSpace not in {True,False}:
-    filoSpace = input('Would you like filoSpace enabled?, "True" or "False": ')
-    if filoSpace == 'True':
-        filoSpace = True
-    if filoSpace == 'False':
-        filoSpace = False
-    if filoSpace not in {True,False}:
-        print('Please type "True" or "False" to note if you would like filoSpace enabled.')
+model_type = None
+while model_type not in {"Default", "Custom"}:
+    model_type = input('FILOPODIA TIP model type, "Default" or "Custom": ')
+    
+    if model_type in {"Default", "Custom"}:
+        if model_type == 'Default':
+            use_default_filotip_model = True
+        if model_type == 'Custom':
+            use_default_filotip_model = False
+            custom_filotip_model_DriveLink= input('Please copy and paste the Google Drive link associated with your custom FILOPODIA TIP model: ')
+            temp = custom_filotip_model_DriveLink.replace('https://drive.google.com/file/d/','')
+            temp = temp.replace('/view?usp=drive_link','')
+            temp = temp.replace('/view?usp=sharing','')
+            custom_filotip_model_DriveLink = temp
+    else:
+        print('Please type "Default" or "Custom" verbatim to note which model you want to use.')
         
 # do you want to perform a comparative_analysis        
-comparative_analysis = None
 print('')
+comparative_analysis = None
 while comparative_analysis not in {True,False}:
     comparative_analysis = input('Would you like a brief statistical summary at the end? More than one experimental condition/variable required and a unique string for each condition/variable must be present in all image file names, "True" or "False": ')
     if comparative_analysis == 'True':
@@ -78,8 +82,8 @@ while comparative_analysis not in {True,False}:
         comparative_analysis = False
 
 #Define desired figure resolution
-Annotation_DPI = None
 print('')
+Annotation_DPI = None
 while type(Annotation_DPI) != int:
     try:
         Annotation_DPI = int(input('Figure DPI (ex. "150","300","900"): '))
@@ -89,50 +93,31 @@ while type(Annotation_DPI) != int:
 
 #Calculate pixel_micron from micron_pixel
 pixel_micron=1/float(um_per_pixel)
-
 print('')
-print('Inputs accepted. Initiating filoTips analysis...')
+print('Inputs accepted. Initiating filoSkeleton analysis...')
 print('')
 
-# ### Load requirements from ZeroCostDL4Mic (requirements from "U-Net_2D_Multilabel" notebook)
-
-# In[2]:
-
+import os
 import subprocess
 import sys
+import imagecodecs
+from builtins import any as b_any
+
+os.chdir(path)
+if not os.path.exists('filoSkeleton analysis'):
+  os.makedirs('filoSkeleton analysis')
 
 def install(package):
     subprocess.check_call([sys.executable, "-m", "pip", "install", package])
-#code from ZeroCostDL4Mic 1.1
-install('pandas')
 install('data')
 install('fpdf')
-install('tensorflow')
-install('scikit-image')
-install('matplotlib')
-install('scikit-learn')
-install('ipywidgets')
-install('tqdm')
-install('seaborn')
-install('statsmodels')
 subprocess.run('pip install h5py==2.10',shell=True)
-#install("h5py==2.10")
 install('imagecodecs')
 
 #code from ZeroCostDL4Mic 1.3
 Notebook_version = '1.13'
 Network = 'U-Net (2D) multilabel'
 
-import imagecodecs
-from builtins import any as b_any
-
-def get_requirements_path():
-    # Store requirements file in 'contents' directory 
-    #current_dir = os.getcwd()
-    #dir_count = current_dir.count('/') - 1
-    #path = './' * (dir_count) + 'requirements.txt'
-    req_path = path+'/requirements.txt'
-    return req_path
 
 def filter_files(file_list, filter_list):
     filtered_list = []
@@ -141,11 +126,19 @@ def filter_files(file_list, filter_list):
             filtered_list.append(fname)
     return filtered_list
 
+def get_requirements_path():
+    # Store requirements file in 'contents' directory 
+    #current_dir = os.getcwd()
+    #dir_count = current_dir.count('/') - 1
+    #path = './' * (dir_count) + 'requirements.txt'
+    req_path = path+'/filoSkeleton analysis/requirements.txt'
+    return req_path
+
 def build_requirements_file(before, after):
     req_path = get_requirements_path()
 
     # Exporting requirements.txt for local run
-    os.chdir(path)
+    os.chdir(path+'/filoSkeleton analysis')
     subprocess.run('pip freeze > requirements.txt',shell=True)
 
     # Get minimum requirements file
@@ -186,14 +179,12 @@ from tensorflow.keras.optimizers import Adam
 from keras.callbacks import ModelCheckpoint
 from keras.callbacks import ReduceLROnPlateau
 from tensorflow.keras.utils import img_to_array
-#from keras.preprocessing.image import ImageDataGenerator, img_to_array, load_img
 from keras import backend as keras
 from keras.callbacks import Callback
 
 # General import
 import numpy as np
 import pandas as pd
-import os
 import glob
 from skimage import img_as_ubyte, io, transform
 import matplotlib as mpl
@@ -240,19 +231,19 @@ warnings.filterwarnings('ignore')
 
 def create_patches(Training_source, Training_target, patch_width, patch_height, min_fraction):
   """
-  Function creates patches from the Training_source and Training_target images. 
+  Function creates patches from the Training_source and Training_target images.
   The steps parameter indicates the offset between patches and, if integer, is the same in x and y.
-  Saves all created patches in two new directories in the /content folder.
+  Saves all created patches in two new directories.
 
   Returns: - Two paths to where the patches are now saved
   """
   DEBUG = False
 
-  Patch_source = os.path.join('/content','img_patches')
-  Patch_target = os.path.join('/content','mask_patches')
-  Patch_rejected = os.path.join('/content','rejected')
+  Patch_source = os.path.join(path,'img_patches')
+  Patch_target = os.path.join(path,'mask_patches')
+  Patch_rejected = os.path.join(path,'rejected')
 
-  #Here we save the patches, in the /content directory as they will not usually be needed after training
+  #Here we save the patches, in the directory as they will not usually be needed after training
   if os.path.exists(Patch_source):
     shutil.rmtree(Patch_source)
   if os.path.exists(Patch_target):
@@ -306,9 +297,9 @@ def create_patches(Training_source, Training_target, patch_width, patch_height, 
 def estimatePatchSize(data_path, max_width = 512, max_height = 512):
 
   files = os.listdir(data_path)
-  
+
   # Get the size of the first image found in the folder and initialise the variables to that
-  n = 0 
+  n = 0
   while os.path.isdir(os.path.join(data_path, files[n])):
     n += 1
   (height_min, width_min) = Image.open(os.path.join(data_path, files[n])).size
@@ -321,7 +312,7 @@ def estimatePatchSize(data_path, max_width = 512, max_height = 512):
         width_min = width
       if height < height_min:
         height_min = height
-  
+
   # Find the power of patches that will fit within the smallest dataset
   width_min, height_min = (fittingPowerOfTwo(width_min), fittingPowerOfTwo(height_min))
 
@@ -331,13 +322,13 @@ def estimatePatchSize(data_path, max_width = 512, max_height = 512):
 
   if height_min > max_height:
     height_min = max_height
-  
+
   return (width_min, height_min)
 
 def fittingPowerOfTwo(number):
   n = 0
   while 2**n <= number:
-    n += 1 
+    n += 1
   return 2**(n-1)
 
 ## TODO: create weighted CE for semantic labels
@@ -371,12 +362,12 @@ def weighted_binary_crossentropy(class_weights):
     return _weighted_binary_crossentropy
 
 
-def save_augment(datagen,orig_img,dir_augmented_data="/content/augment"):
+def save_augment(datagen,orig_img,dir_augmented_data=path+"/augment"):
   """
-  Saves a subset of the augmented data for visualisation, by default in /content.
+  Saves a subset of the augmented data for visualisation, by default.
 
   This is adapted from: https://fairyonice.github.io/Learn-about-ImageDataGenerator.html
-  
+
   """
   try:
     os.mkdir(dir_augmented_data)
@@ -411,11 +402,11 @@ def save_augment(datagen,orig_img,dir_augmented_data="/content/augment"):
 def buildDoubleGenerator(image_datagen, mask_datagen, image_folder_path, mask_folder_path, subset, batch_size, target_size, validatio_split):
   '''
   Can generate image and mask at the same time use the same seed for image_datagen and mask_datagen to ensure the transformation for image and mask is the same
-  
-  datagen: ImageDataGenerator 
+
+  datagen: ImageDataGenerator
   subset: can take either 'training' or 'validation'
   '''
-  
+
   # Build the dict for the ImageDataGenerator
   # non_aug_args = dict(width_shift_range = 0,
   #                     height_shift_range = 0,
@@ -428,7 +419,7 @@ def buildDoubleGenerator(image_datagen, mask_datagen, image_folder_path, mask_fo
   # default params of data generator is without augmentation
   mask_load_gen = ImageDataGenerator(dtype='uint8', validation_split=validatio_split)
   image_load_gen = ImageDataGenerator(dtype='float32', validation_split=validatio_split, preprocessing_function = normalizePercentile)
-  
+
   image_generator = image_load_gen.flow_from_directory(
         os.path.dirname(image_folder_path),
         classes = [os.path.basename(image_folder_path)],
@@ -476,7 +467,7 @@ def buildDoubleGenerator(image_datagen, mask_datagen, image_folder_path, mask_fo
 
       else:
           yield (img,mask)
-      
+
 
 def prepareGenerators(image_folder_path, mask_folder_path, datagen_parameters, batch_size = 4, target_size = (512, 512), validatio_split = 0.1):
   image_datagen = ImageDataGenerator(**datagen_parameters, preprocessing_function = normalizePercentile)
@@ -526,7 +517,7 @@ def normalizeMinMax(x, dtype=np.float32):
   return x
 
 
-# This is code outlines the architecture of U-net. The choice of pooling steps decides the depth of the network. 
+# This is code outlines the architecture of U-net. The choice of pooling steps decides the depth of the network.
 def unet(pretrained_weights = None, input_size = (256,256,1), pooling_steps = 4, learning_rate = 1e-4, verbose=True, labels=2):
     inputs = Input(input_size)
     conv1 = Conv2D(64, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(inputs)
@@ -535,7 +526,7 @@ def unet(pretrained_weights = None, input_size = (256,256,1), pooling_steps = 4,
     pool1 = MaxPooling2D(pool_size=(2, 2))(conv1)
     conv2 = Conv2D(128, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(pool1)
     conv2 = Conv2D(128, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(conv2)
-    
+
     if pooling_steps > 1:
       pool2 = MaxPooling2D(pool_size=(2, 2))(conv2)
       conv3 = Conv2D(256, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(pool2)
@@ -546,7 +537,7 @@ def unet(pretrained_weights = None, input_size = (256,256,1), pooling_steps = 4,
         conv4 = Conv2D(512, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(pool3)
         conv4 = Conv2D(512, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(conv4)
         drop4 = Dropout(0.5)(conv4)
-      
+
         if pooling_steps > 3:
           pool4 = MaxPooling2D(pool_size=(2, 2))(drop4)
           conv5 = Conv2D(1024, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(pool4)
@@ -558,7 +549,7 @@ def unet(pretrained_weights = None, input_size = (256,256,1), pooling_steps = 4,
           merge6 = concatenate([drop4,up6], axis = 3)
           conv6 = Conv2D(512, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(merge6)
           conv6 = Conv2D(512, 3, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(conv6)
-          
+
     if pooling_steps > 2:
       up7 = Conv2D(256, 2, activation = 'relu', padding = 'same', kernel_initializer = 'he_normal')(UpSampling2D(size = (2,2))(drop4))
       if pooling_steps > 3:
@@ -574,12 +565,12 @@ def unet(pretrained_weights = None, input_size = (256,256,1), pooling_steps = 4,
       merge8 = concatenate([conv2,up8], axis = 3)
       conv8 = Conv2D(128, 3, activation= 'relu', padding = 'same', kernel_initializer = 'he_normal')(merge8)
       conv8 = Conv2D(128, 3, activation= 'relu', padding = 'same', kernel_initializer = 'he_normal')(conv8)
-      
+
     if pooling_steps == 1:
       up9 = Conv2D(64, 2, padding = 'same', kernel_initializer = 'he_normal')(UpSampling2D(size = (2,2))(conv2))
     else:
       up9 = Conv2D(64, 2, padding = 'same', kernel_initializer = 'he_normal')(UpSampling2D(size = (2,2))(conv8)) #activation = 'relu'
-    
+
     merge9 = concatenate([conv1,up9], axis = 3)
     conv9 = Conv2D(64, 3, padding = 'same', kernel_initializer = 'he_normal')(merge9) #activation = 'relu'
     conv9 = Conv2D(64, 3, padding = 'same', kernel_initializer = 'he_normal')(conv9) #activation = 'relu'
@@ -640,8 +631,8 @@ def predict_as_tiles(Image_path, model):
   Image_raw = normalizePercentile(Image_raw)
 
   # Get the patch size from the input layer of the model
-  patch_size = model.layers[0].output_shape[0][1:3]
   #patch_size = model.layers[0].output_shape[1:3]
+  patch_size = model.layers[0].output_shape[0][1:3]
 
   # Pad the image with zeros if any of its dimensions is smaller than the patch size
   if Image_raw.shape[0] < patch_size[0] or Image_raw.shape[1] < patch_size[1]:
@@ -661,13 +652,13 @@ def predict_as_tiles(Image_path, model):
       xi = patch_size[0]*x
       yi = patch_size[1]*y
 
-      # If the patch exceeds the edge of the image shift it back 
+      # If the patch exceeds the edge of the image shift it back
       if xi+patch_size[0] >= Image.shape[0]:
         xi = Image.shape[0]-patch_size[0]
 
       if yi+patch_size[1] >= Image.shape[1]:
         yi = Image.shape[1]-patch_size[1]
-      
+
       # Extract and reshape the patch
       patch = Image[xi:xi+patch_size[0], yi:yi+patch_size[1]]
       patch = np.reshape(patch,patch.shape+(1,))
@@ -724,15 +715,15 @@ def pdf_export(trained = False, augmentation = False, pretrained_model = False):
   pdf = MyFPDF()
   pdf.add_page()
   pdf.set_right_margin(-1)
-  pdf.set_font("Arial", size = 11, style='B') 
+  pdf.set_font("Arial", size = 11, style='B')
 
   day = datetime.now()
   datetime_str = str(day)[0:10]
 
   Header = 'Training report for '+Network+' model ('+model_name+')\nDate: '+datetime_str
-  pdf.multi_cell(180, 5, txt = Header, align = 'L') 
-    
-  # add another cell 
+  pdf.multi_cell(180, 5, txt = Header, align = 'L')
+
+  # add another cell
   if trained:
     training_time = "Training time: "+str(hour)+ "hour(s) "+str(mins)+"min(s) "+str(round(sec))+"sec(s)"
     pdf.cell(190, 5, txt = training_time, ln = 1, align='L')
@@ -804,7 +795,7 @@ def pdf_export(trained = False, augmentation = False, pretrained_model = False):
     pdf.cell(200, 5, txt='Default Advanced Parameters were enabled')
   pdf.cell(200, 5, txt='The following parameters were used for training:')
   pdf.ln(1)
-  html = """ 
+  html = """
   <table width=40% style="margin-left:0px;">
     <tr>
       <th width = 50% align="left">Parameter</th>
@@ -869,8 +860,8 @@ def pdf_export(trained = False, augmentation = False, pretrained_model = False):
   pdf.ln(1)
   pdf.cell(60, 5, txt = 'Example Training pair', ln=1)
   pdf.ln(1)
-  exp_size = io.imread('/content/TrainingDataExample_Unet2D.png').shape
-  pdf.image('/content/TrainingDataExample_Unet2D.png', x = 11, y = None, w = round(exp_size[1]/8), h = round(exp_size[0]/8))
+  exp_size = io.imread(path+'/TrainingDataExample_Unet2D.png').shape
+  pdf.image(path+'/TrainingDataExample_Unet2D.png', x = 11, y = None, w = round(exp_size[1]/8), h = round(exp_size[0]/8))
   pdf.ln(1)
   ref_1 = 'References:\n - ZeroCostDL4Mic: von Chamier, Lucas & Laine, Romain, et al. "Democratising deep learning for microscopy with ZeroCostDL4Mic." Nature Communications (2021).'
   pdf.multi_cell(190, 5, txt = ref_1, align='L')
@@ -896,7 +887,7 @@ def qc_pdf_export():
   pdf = MyFPDF()
   pdf.add_page()
   pdf.set_right_margin(-1)
-  pdf.set_font("Arial", size = 11, style='B') 
+  pdf.set_font("Arial", size = 11, style='B')
 
   Network = 'Unet 2D'
 
@@ -904,7 +895,7 @@ def qc_pdf_export():
   datetime_str = str(day)[0:10]
 
   Header = 'Quality Control report for '+Network+' model ('+QC_model_name+')\nDate: '+datetime_str
-  pdf.multi_cell(180, 5, txt = Header, align = 'L') 
+  pdf.multi_cell(180, 5, txt = Header, align = 'L')
 
   all_packages = ''
   for requirement in freeze(local_only=True):
@@ -966,7 +957,7 @@ def qc_pdf_export():
         </tr>""".format(image,str(round(float(IoU),3)))
       html = html+cells
     html = html+"""</body></table>"""
-    
+
   pdf.write_html(html)
 
   pdf.ln(1)
@@ -992,442 +983,614 @@ def qc_pdf_export():
 after = [str(m) for m in sys.modules]
 build_requirements_file(before, after)
 
-# from tensorflow.python.client import device_lib 
+# from tensorflow.python.client import device_lib
 # device_lib.list_local_devices()
 
 # print the tensorflow version
 print('Tensorflow version is ' + str(tf.__version__))
 
-
-# ### Load filoTips requirements
-
-# In[3]:
-
-
-subprocess.run('pip install --upgrade --no-cache-dir gdown',shell=True)
-install('opencv-python')
-import pandas as pd
-import numpy as np
-import cv2
-import glob
-import matplotlib.pyplot as plt
-import tifffile as tiff
+#@title 2) Load filoSkeleton requirements
+subprocess.call(['pip', 'install', '--upgrade', '--no-cache-dir', 'gdown'])
 import os
-import seaborn as sns
-#import statistics as stats
+import glob
+import numpy as np
+import pandas as pd
+import cv2
+import matplotlib.pyplot as plt
 import math
+import shutil
+import tifffile as tiff
 import scipy.stats as stats
 from statsmodels.stats.multicomp import pairwise_tukeyhsd
+import seaborn as sns
+
 install('researchpy')
 import researchpy as rp
-import shutil
-
-
-# ### Download the deep learning agent and prepare for predictions
-
-# In[4]:
-
-
-os.chdir(path)
-if not os.path.exists('filoTips analysis'):
-    os.makedirs('filoTips analysis')
-os.chdir(path+'/filoTips analysis')
-if not os.path.exists('filoTips predictions'):
-  os.makedirs('filoTips predictions')
-if not os.path.exists('filoTips source'):
-  os.makedirs('filoTips source')
-
-os.chdir(path)
-files=sorted(glob.glob('*.tif'))
-if len(files)>0:
-  for file in files:
-    temp=file.replace('.tif','.tiff')
-    os.replace(file,temp)
-files=sorted(glob.glob('*.tiff'))
-for file in files:
-  shutil.copy(file,path+'/filoTips analysis/filoTips source/'+file)
-
-os.chdir(path+'/filoTips analysis')
-if model_type=='Default':
-  subprocess.run('gdown --id 1zh5j_VL380ebyQxDCJ5N2fhOxWqkFQsC',shell=True)
-  subprocess.run('tar -xf StanleyV3.zip',shell=True)
-if model_type=='Custom':
-  subprocess.run(['gdown', custom_model_DriveLink])
-  zipp=glob.glob('*.zip')[0]
-  custom_model_name = zipp.replace('.zip','')
-  subprocess.run(['tar', '-xf', zipp])
-
-os.chdir('filoTips source')
-for file in files:
-  img=cv2.imread(file,-1)
-  img=cv2.normalize(img, None, 0, 255, cv2.NORM_MINMAX, dtype=cv2.CV_8U)
-  tiff.imsave(file,img)
-  
-os.chdir(path+'/filoTips analysis')
-
-
-# ### Have the model generate masks of cell bodies, filopodia, and background (includes code from "U-Net_2D_Multilabel" ZeroCostDL4Mic notebook)
-
-# In[5]:
-
-
-Data_folder = path+'/filoTips analysis/filoTips source'
-Results_folder = path+'/filoTips analysis/filoTips predictions'
-if model_type=='Default':
-  Prediction_model_folder = path+"/filoTips analysis/Stanley"
-if model_type=='Custom':
-  Prediction_model_folder = path+'/filoTips analysis/'+custom_model_name
-
-Use_the_current_trained_model = False
-
-#Here we find the loaded model name and parent path
-Prediction_model_name = os.path.basename(Prediction_model_folder)
-Prediction_model_path = os.path.dirname(Prediction_model_folder)
-
-
-# ------------- Failsafes ------------
-if (Use_the_current_trained_model): 
-  print("Using current trained network")
-  Prediction_model_name = model_name
-  Prediction_model_path = model_path
-
-full_Prediction_model_path = os.path.join(Prediction_model_path, Prediction_model_name)
-if os.path.exists(full_Prediction_model_path):
-  print("The "+Prediction_model_name+" network will be used.")
-else:
-  print(R+'!! WARNING: The chosen model does not exist !!'+W)
-  print('Please make sure you provide a valid model path and model name before proceeding further.')
-
-
-# ------------- Prepare the model and run predictions ------------
-
-# Load the model and prepare generator
 
 
 
-unet = load_model(os.path.join(Prediction_model_path, Prediction_model_name, 'weights_best.hdf5'), custom_objects={'_weighted_binary_crossentropy': weighted_binary_crossentropy(np.ones(2))})
-#Input_size = unet.layers[0].output_shape[1:3]
-Input_size= unet.layers[0].output_shape[0][1:3]
-print('Model input size: '+str(Input_size[0])+'x'+str(Input_size[1]))
 
 
-# Create a list of sources
-source_dir_list = os.listdir(Data_folder)
-number_of_dataset = len(source_dir_list)
-print('Number of dataset found in the folder: '+str(number_of_dataset))
-
-predictions = []
-for i in range(number_of_dataset):
-  predictions.append(predict_as_tiles(os.path.join(Data_folder, source_dir_list[i]), unet))
-  #predictions.append(prediction(os.path.join(Data_folder, source_dir_list[i]), os.path.join(Prediction_model_path, Prediction_model_name)))
-
-
-# Save the results in the folder along with the masks according to the set threshold
-saveResult(Results_folder, predictions, source_dir_list, prefix=prediction_prefix)
-
-
-# ------------- For display ------------
-print('--------------------------------------------------------------')
-os.chdir(path+'/filoTips analysis/filoTips predictions')
-files=sorted(glob.glob('*.tif'))
-for file in files:
-  name=file.replace('.tif','.tiff')
-  os.rename(file,name)
-os.chdir(path+'/filoTips analysis')
-
-def show_prediction_mask(file=os.listdir(Data_folder)):
-
-  plt.figure(figsize=(10,6))
-  # Wide-field
-  plt.subplot(1,2,1)
-  plt.axis('off')
-  img_Source = plt.imread(os.path.join(Data_folder, file))
-  plt.imshow(img_Source, cmap='gray')
-  plt.title('Source image',fontsize=15)
-  # Prediction
-  plt.subplot(1,2,2)
-  plt.axis('off')
-  img_Prediction = plt.imread(os.path.join(Results_folder, prediction_prefix+file))
-  plt.imshow(img_Prediction, cmap='gray')
-  plt.title('Prediction',fontsize=15)
-
-#interact(show_prediction_mask);
-
-
-
-# ### Use the predictions to get information about cell bodies and filopodia
-
-# In[6]:
-
-
-#@title 5) Use the masks to get information about cell bodies and filopodia
-print('')
-print('-- Analyzing images--')
 def get_distance(x2,x1,y2,y1):
     return math.sqrt((x2-x1)**2+(y2-y1)**2)
 
-os.chdir(path+'/filoTips analysis/filoTips predictions')
-temp=sorted(glob.glob('*.tiff'))
-masks,images=[],[]
-for mask in temp:
-  masks.append(mask.replace('Predicted_',''))
-  images.append(mask.replace('Predicted_',''))
-  new_mask=(mask.replace('Predicted_',''))
-  os.rename(mask,new_mask)
+red,aqua,white,black,purple,gray1,gray2,gray3=(220,20,60),(127,255,212),(0,0,0),(255,255,255),(178,58,238),(128,128,128),(64,64,64),(32,32,32)
+white,yellow,blue,green,pink,red,orange,black,light_orange,gray4=(255,255,255),(250,250,0),(51,153,255),(0,204,0),(255,0,127),(255,51,51),(153,76,0),(0,0,0),(255,178,102),(160,160,160)
+#orange,purple=(255,125,64),(191,62,255)
+pink,beige,peacock,peachpuff1=(255,130,171),(245,245,220),(51,161,201),(161,161,161)
+random_color=[(222,184,135),(255,211,155),(238,197,145),(205,170,125),(139,115,85),(138,54,15),(138,51,36),(95,158,160),(152,245,255),(142,229,238)]
 
-for q in range(0,len(images)):
-  print('--Analyzing '+str(q+1)+' / '+str(len(images))+' images--')
-  os.chdir(path+'/filoTips analysis/filoTips predictions')
-  mask=cv2.imread(images[q],-1)
-  os.chdir(path+'/filoTips analysis/filoTips source')
-  img=cv2.imread(images[q],-1)
-  img_copy=cv2.imread(images[q])
-  img_copy[np.where(img_copy>0)]=0
-  img_copy2=np.copy(img_copy)
-  img_copy3=np.copy(img_copy)
-  img_copy4=np.copy(img_copy)
-  cell=np.copy(mask)
-  cell[np.where(cell==2)]=0
-  filo_tip=np.copy(mask)
-  filo_tip[np.where(filo_tip==1)]=0
+#@title 3) Download the deep learning agent and prepare for predictions
+os.chdir(path+'/filoSkeleton analysis')
 
-  contours, hierarchy = cv2.findContours(cell, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
-  mean_body_vals,mean_cortex_vals,centroids,areas,perimeters,aspect_ratios,leading_edge_vals,leading_body,cortex_body,all_body_x,all_body_y,all_cortex_x,all_cortex_y,cortex_means,body_means,lead_means,centroids,side_rear_means=[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]
-  white,yellow,blue,green,pink,red,orange,black,light_orange,gray=(255,255,255),(204,204,0),(51,153,255),(0,204,0),(255,0,127),(255,51,51),(153,76,0),(0,0,0),(255,178,102),(160,160,160)
-  gray1,gray2,gray3,gray4,purple=(224,224,224),(192,192,192),(160,160,160),(128,128,128),(102,0,51)
-  for i in range(0,len(contours)):
-      M=cv2.moments(contours[i])
-      if M['m00']!=0:
-          area=cv2.contourArea(contours[i])/(pixel_micron**2)
-          if area>25:
-              centroid=(int(M['m10']/M['m00']),int(M['m01']/M['m00']))
-              centroids.append(centroid)
-              areas.append(cv2.contourArea(contours[i])/(pixel_micron**2))
-              perimeters.append(cv2.arcLength(contours[i],True)/(pixel_micron))
-              rect=cv2.minAreaRect(contours[i])
-              wh=rect[1]
-              w=np.min(wh)
-              h=np.max(wh)
-              aspect_ratios.append(float(w)/h)
-              img_copy2=cv2.drawContours(np.copy(img_copy),contours,i,white,-1)
-              img_copy2=cv2.drawContours(img_copy2,contours,i,black,20)#was15
-              img_copy2=np.where((img_copy2==list(white)).all(axis=2))
-              img_copy8=cv2.drawContours(np.copy(img_copy),contours,i,purple,-1)
-              img_copy8=cv2.drawContours(img_copy8,contours,i,black,9)
-              img_copy8=np.where((img_copy8==list(purple)).all(axis=2))
-              img_copy3=cv2.drawContours(np.copy(img_copy3),contours,i,gray1,-1)
-              img_copy3=cv2.drawContours(img_copy3,contours,i,black,5)
-              img_copy3[img_copy8]=purple
-              img_copy3[img_copy2]=gray2
+if not os.path.exists(path+'/filoSkeleton analysis/filoSkeleton cell predictions'):
+  os.makedirs(path+'/filoSkeleton analysis/filoSkeleton cell predictions')
+if not os.path.exists(path+'/filoSkeleton analysis/filoSkeleton filopodia tip predictions'):
+  os.makedirs(path+'/filoSkeleton analysis/filoSkeleton filopodia tip predictions')
+if not os.path.exists(path+'/filoSkeleton analysis/filoSkeleton cell source'):
+  os.makedirs(path+'/filoSkeleton analysis/filoSkeleton cell source')
+if not os.path.exists(path+'/filoSkeleton analysis/filoSkeleton filopodia tip source'):
+  os.makedirs(path+'/filoSkeleton analysis/filoSkeleton filopodia tip source')
+if not os.path.exists(path+'/filoSkeleton analysis/filoSkeleton merged'):
+  os.makedirs(path+'/filoSkeleton analysis/filoSkeleton merged')
 
-              body_vals=img[np.where((img_copy3==list(gray2)).all(axis=2))]
-              body_means.append(np.mean(body_vals))
-              cortex_vals=img[np.where((img_copy3==list(gray1)).all(axis=2))]
-              cortex_means.append(np.mean(cortex_vals))
-              lead_ind=int(np.argmax(cortex_vals==max(cortex_vals)))
-              cortex_coords=np.where((img_copy3==list(gray1)).all(axis=2))
-              y1,x1=np.where((img_copy3==list(gray1)).all(axis=2))[0],np.where((img_copy3==list(gray1)).all(axis=2))[1]
-              img_copy4=cv2.circle(img_copy4, (x1[lead_ind],y1[lead_ind]), 15, white,thickness=-1)
-              circle_coords=np.where((img_copy4==list(white)).all(axis=2))
-              circle=[]
-              leading_coords=[]
-              lead_x,lead_y=[],[]
-              for y in range(0,len(circle_coords[0])):
-                  circle.append((circle_coords[0][y],circle_coords[1][y]))
-              for x in range(0,len(cortex_coords[0])):
-                  c_coords=(cortex_coords[0][x],cortex_coords[1][x])
-                  if c_coords in circle:
-                      lead_x.append(c_coords[1])
-                      lead_y.append(c_coords[0])
-              lead_coord=lead_y,lead_x
-              img_copy3[lead_coord]=gray3        
-              lead_vals=img[lead_coord]        
-              lead_means.append(np.mean(lead_vals))
-              img_copy4=cv2.circle(img_copy4, (x1[lead_ind],y1[lead_ind]), 15, gray1,thickness=-1)
-              side_rear_means.append(np.mean(img[np.where((img_copy3==list(gray1)).all(axis=2))]))
-              img_copy3[np.where((img_copy3==list(gray1)).all(axis=2))]=orange
-              img_copy3[np.where((img_copy3==list(gray2)).all(axis=2))]=yellow
-              img_copy3[np.where((img_copy3==list(gray3)).all(axis=2))]=blue
-              img_copy3[np.where((img_copy3==list(purple)).all(axis=2))]=gray4
-  img_copy5=np.copy(img_copy3)            
-  img_copy5[np.where((img_copy3==list(orange)).all(axis=2))]=blue
-  filo_tip[np.where((img_copy3==list(yellow)).all(axis=2))]=0
+os.chdir(path)
+green_files=sorted(glob.glob('*'+actin_channel+'.tiff'))
+if len(green_files)==0:
+  green_files=sorted(glob.glob('*'+actin_channel+'.tif'))
+for file in green_files:
+  shutil.copy(file,path+'/filoSkeleton analysis/filoSkeleton cell source/'+file)
 
+red_files=sorted(glob.glob('*'+filo_channel+'.tiff'))
+if len(red_files)==0:
+  red_files=sorted(glob.glob('*'+filo_channel+'.tif'))
+for file in red_files:
+  shutil.copy(file,path+'/filoSkeleton analysis/filoSkeleton filopodia tip source/'+file)
 
-  #get filo information
-  contours, hierarchy = cv2.findContours(filo_tip, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
-  filo_centroids,filo_lengths_pix,filo_lengths_um,filo_means,temp_filo,cell_assignment=[],[],[],[],[],[]
-  for i in range(0,len(contours)):
-      M=cv2.moments(contours[i])
-      if M['m00']!=0:
-          centroid=(int(M['m10']/M['m00']),int(M['m01']/M['m00']))
-          all_blue=np.where((img_copy5==list(blue)).all(axis=2))
-          distances=[]
-          for d in range(0,len(all_blue[0])):
-              y2,y1,x2,x1=centroid[1],all_blue[0][d],centroid[0],all_blue[1][d]
-              distance=get_distance(x2, x1, y2, y1)
-              distances.append(distance)
-          if len(distances)==0:
-            break
-          ind=distances.index(min(distances))
-          length=min(distances)/pixel_micron
+merge_files=sorted(glob.glob('*RGB.tiff'))
+if len(merge_files)==0:
+  merge_files=sorted(glob.glob('*RGB.tif'))
+for file in merge_files:
+  shutil.copy(file,path+'/filoSkeleton analysis/filoSkeleton merged/'+file)
 
-          if length <10:
-              filo_centroids.append(centroid)
-              filo_lengths_pix.append(min(distances))
-              filo_lengths_um.append(min(distances)/pixel_micron)
-              area=cv2.contourArea(contours[i])
-              img_copy3=cv2.circle(img_copy3,centroid,radius=1,color=white,thickness=-1,)
+#Sandra_Final
+os.chdir(path+'/filoSkeleton analysis')
+if use_default_cell_model == True:
+  subprocess.call(['gdown', '--id', '1wnCJAVDNxd9pSpUc6KgXppig3N-MKExD'])
+  subprocess.call(['tar', '-xf', 'Sandra_Final.zip'])
 
-              y=np.where((img_copy3==list(white)).all(axis=2))[0]
-              x=np.where((img_copy3==list(white)).all(axis=2))[1]
-              filo_means.append(np.mean(img[y,x]))
-              distances=[]
-              for cent in centroids:
-                  y2,y1,x2,x1=centroid[1],cent[1],centroid[0],cent[0]
-                  distances.append(get_distance(x2, x1, y2, y1))   
-              cell_assignment.append(distances.index(min(distances))+1)
-              cell_assignments=distances.index(min(distances))  
-              img_copy3[y,x]=pink
-              temp_filo.append(img[y,x])
-              coord=(all_blue[1][ind],all_blue[0][ind])
-              img_copy5=cv2.circle(img_copy5,coord,1,red)
-              img_copy5=cv2.line(img_copy5,coord,centroids[cell_assignments],red,2)
-              img_copy3=cv2.line(img_copy3,centroid,coord,pink,1)
-
-  #calculate spacing (filoSpace)
-  if filoSpace == True:
-    img_copy6=np.copy(img_copy5)
-    img_copy7=np.copy(img_copy)
-    img_copy6[np.where((img_copy5!=list(blue)).all(axis=2))]=black
-    img_copy6 = cv2.cvtColor(img_copy6, cv2.COLOR_BGR2GRAY)
-    contours, hierarchy = cv2.findContours(img_copy6, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
-    cell_ind=[]
-    space_perimeters=[]
-    for i in range(0,len(contours)):
-      M=cv2.moments(contours[i])
-      if M['m00']!=0:
-        perimeter=cv2.arcLength(contours[i],False)/(pixel_micron)
-        centroid=(int(M['m10']/M['m00']),int(M['m01']/M['m00']))
-        if perimeter<20:
-          img_copy7=cv2.drawContours(np.copy(img_copy7),contours,i,white,-1)
-          distances2=[]
-          for d in range(0,len(centroids)):
-            x1,y1,x2,y2=centroid[0],centroid[1],centroids[d][0],centroids[d][1]
-            distance=get_distance(x2, x1, y2, y1)
-            distances2.append(distance)
-          cell_ind.append(distances2.index(min(distances2))+1)
-          space_perimeters.append(perimeter)
-    cell_ind=np.asarray(cell_ind)
-    space_perimeters=np.asarray(space_perimeters)
-    inds=np.asarray(list(set(cell_ind)))
-    space_cell_num,space_cell_avg=[],[]
-    for i in inds:
-      cell_inds=np.where(cell_ind==i)[0]
-      space_cell_num.append(i)
-      space_cell_avg.append(np.mean(space_perimeters[cell_inds]))
+if use_default_cell_model ==False:
+  subprocess.run(['gdown', custom_cell_model_DriveLink])
+  zip1=glob.glob('*.zip')[0]
+  custom_cell_model_name = zip1.replace('.zip','')
+  subprocess.run(['tar', '-xf', zip1])
   
-  #plot centroids and cell numbers
-  k=0
-  for centroid in centroids:
-      k+=1
-      img_copy3=cv2.circle(img_copy3,centroid,5,green,2)
-      img_copy3=cv2.putText(img_copy3,text=str(k),org=centroid,fontFace= cv2.FONT_HERSHEY_SIMPLEX, fontScale=0.8, color=(254,254,254), thickness=2, lineType=cv2.LINE_AA)
+  
+#Jerry_Final_Myo10
+if use_default_filotip_model ==True:
+  subprocess.call(['gdown', '--id', '1UFCtMLfV8PP1eX2imUa7aQg0HRbtlKcw'])
+  subprocess.call(['tar', '-xf', 'Jerry_Final_Myo10.zip'])
+  
+if use_default_filotip_model==False:  
+  subprocess.run(['gdown', custom_filotip_model_DriveLink])
+  zip2=glob.glob('*.zip')[0]
+  custom_filotip_model_name = zip2.replace('.zip','')
+  subprocess.run(['tar', '-xf', zip2])
 
-  #calculate cortex/cell and filo/cell ratios
-  cortex_body= [i/j for i,j in zip(cortex_means,body_means)]
-  lead_body=[i/j for i,j in zip(lead_means,body_means)]
-  side_rear_body=[i/j for i,j in zip(side_rear_means,body_means)]
-  lead_side_rear=[i/j for i,j in zip(lead_means,side_rear_means)]
-  final_assignments=[]
-  for i in range(1,len(centroids)+1):
-      if i not in cell_assignment:
-          final_assignments.append(0)
-      if i in cell_assignment:
-          final_assignments.append(cell_assignment.count(i))
-  cell_num,filo_num=list(range(1,len(centroids)+1)),list(range(1,len(filo_centroids)+1))
-  filo_cell_vals=[]
-  for cell in cell_assignment:
-      filo_cell_vals.append(body_means[cell-1])
-  filo_body=[i/j for i,j in zip(filo_means,filo_cell_vals)]
+#make images 8-bit
+#os.chdir(path+'/filoSkeleton cell source')
+#for file in green_files:
+#  img=cv2.imread(file,-1)
+#  img=cv2.normalize(img, None, 0, 255, cv2.NORM_MINMAX, dtype=cv2.CV_8U)
+#  tiff.imsave(file,img)
+#os.chdir(path+'/filoSkeleton filopodia tip source')
+#for file in red_files:
+#  img=cv2.imread(file,-1)
+#  img=cv2.normalize(img, None, 0, 255, cv2.NORM_MINMAX, dtype=cv2.CV_8U)
+#  tiff.imsave(file,img)
 
-  #include spacing summary information
-  if filoSpace==True:
-    for i in cell_num:
-      if i not in space_cell_num:
-        space_cell_num.append(i)
-        space_cell_avg.append('nan')
-    zipped_lists = zip(space_cell_num, space_cell_avg)
-    sorted_pairs = sorted(zipped_lists)
-    tuples = zip(*sorted_pairs)
-    space_cell_num, space_cell_avg = [ list(tuple) for tuple in  tuples]
+os.chdir(path)
 
-  #make output file and pool analysis
-  os.chdir(path+'/filoTips analysis')
-  if not os.path.exists('filoTips_Output'):
-      os.makedirs('filoTips_Output')
-  exp_num_cell=np.repeat(images[q],len(cell_num))
-  exp_num_filo=np.repeat(images[q],len(filo_num))
-  if filoSpace==True:
-    cell_dict={'Experiment Name':exp_num_cell,'Cell Number':cell_num,'Aspect Ratio':aspect_ratios,'Body Intensity':body_means,'Cortex Intensity':cortex_means,'Leading Edge Intensity':lead_means,'Side & Rear Intensity':side_rear_means,'Cortex_Body':cortex_body,'Leading Edge_Body':lead_body,'SideRear_Body':side_rear_body,'Leading Edge_SideRear':lead_side_rear,'Filo Number':final_assignments,'Cell Area (um^2)':areas,'Perimeter (um)':perimeters,'Average Inter-filo Distance (um)':space_cell_avg}
+#@title 4) Have the model generate masks of cell bodies, filopodia, and background
+
+
+# ------------- Initial user input ------------
+Data_folder = [path+'/filoSkeleton analysis/filoSkeleton cell source',path+'/filoSkeleton analysis/filoSkeleton filopodia tip source']
+Results_folder = [path+'/filoSkeleton analysis/filoSkeleton cell predictions',path+'/filoSkeleton analysis/filoSkeleton filopodia tip predictions']
+Prediction_model_folder = [path+"/filoSkeleton analysis/Sandra_Final",path+'/filoSkeleton analysis/Jerry_Final_Myo10']
+if use_default_cell_model==False:
+  Prediction_model_folder[0]= path+'/filoSkeleton analysis/'+custom_cell_model_name
+if use_default_filotip_model==False:
+  Prediction_model_folder[1]=path+'/filoSkeleton analysis/'+custom_filotip_model_name
+
+for y in range(0,len(Data_folder)):
+  Use_the_current_trained_model = False
+
+  #Here we find the loaded model name and parent path
+  Prediction_model_name = os.path.basename(Prediction_model_folder[y])
+  Prediction_model_path = os.path.dirname(Prediction_model_folder[y])
+
+
+  # ------------- Failsafes ------------
+  if (Use_the_current_trained_model):
+    print("Using current trained network")
+    Prediction_model_name = model_name
+    Prediction_model_path = model_path
+
+  full_Prediction_model_path = os.path.join(Prediction_model_path, Prediction_model_name)
+  if os.path.exists(full_Prediction_model_path):
+    print("The "+Prediction_model_name+" network will be used.")
   else:
-    cell_dict={'Experiment Name':exp_num_cell,'Cell Number':cell_num,'Aspect Ratio':aspect_ratios,'Body Intensity':body_means,'Cortex Intensity':cortex_means,'Leading Edge Intensity':lead_means,'Side & Rear Intensity':side_rear_means,'Cortex_Body':cortex_body,'Leading Edge_Body':lead_body,'SideRear_Body':side_rear_body,'Leading Edge_SideRear':lead_side_rear,'Filo Number':final_assignments,'Cell Area (um^2)':areas,'Perimeter (um)':perimeters}
-  filo_dict={'Experiment Name':exp_num_filo,'Filo Number':filo_num,'Cell Assignment':cell_assignment,'Filo Tip Intensity':filo_means,'Assigned Cell Body Intensity':filo_cell_vals,'Filo/Body':filo_body,'Filo Length(um)':filo_lengths_um}
-  cell_output=pd.DataFrame(cell_dict)
-  filo_output=pd.DataFrame(filo_dict)
-  cell_output.to_csv('filoTips_Output/'+str(images[q])+'_Cell_Output_.csv',index=False)
-  filo_output.to_csv('filoTips_Output/'+str(images[q])+'_Filo_Output_.csv',index=False)
+    print(R+'!! WARNING: The chosen model does not exist !!'+W)
+    print('Please make sure you provide a valid model path and model name before proceeding further.')
 
-  if filoSpace==True:    
-    fig, final=plt.subplots(1,3)
-    final[0].imshow(img)
-    final[0].set_title('Original Image')
-    final[0].axis('off')
-    final[1].imshow(img_copy3)
-    final[1].set_title('filoTips')
-    final[1].axis('off')
-    final[2].imshow(img_copy5)
-    final[2].set_title('filoSpace')
-    final[2].axis('off')
-    plt.savefig('filoTips_Output/'+str(images[q])+'_Annotation.tiff',dpi=Annotation_DPI)
-  else:
+
+  # ------------- Prepare the model and run predictions ------------
+
+  # Load the model and prepare generator
+
+
+
+  unet = load_model(os.path.join(Prediction_model_path, Prediction_model_name, 'weights_best.hdf5'), custom_objects={'_weighted_binary_crossentropy': weighted_binary_crossentropy(np.ones(2))})
+  #Input_size = unet.layers[0].output_shape[1:3]
+  Input_size= unet.layers[0].output_shape[0][1:3]
+  print('Model input size: '+str(Input_size[0])+'x'+str(Input_size[1]))
+
+  # Create a list of sources
+  source_dir_list = os.listdir(Data_folder[y])
+  number_of_dataset = len(source_dir_list)
+  print('Number of dataset found in the folder: '+str(number_of_dataset))
+
+  predictions = []
+  for i in range(number_of_dataset):
+    predictions.append(predict_as_tiles(os.path.join(Data_folder[y], source_dir_list[i]), unet))
+    #predictions.append(prediction(os.path.join(Data_folder[y], source_dir_list[i]), os.path.join(Prediction_model_path, Prediction_model_name)))
+
+
+  # Save the results in the folder along with the masks according to the set threshold
+  saveResult(Results_folder[y], predictions, source_dir_list, prefix=prediction_prefix)
+
+
+  # ------------- For display ------------
+  print('--------------------------------------------------------------')
+#  os.chdir(Results_folder[y])
+#  files=sorted(glob.glob('*.tif'))
+  #for file in files:
+  #  name=file.replace('.tif','.tiff')
+  #  os.rename(file,name)
+#  os.chdir(path)
+
+#  def show_prediction_mask(file=os.listdir(Data_folder[y])):
+#
+#    plt.figure(figsize=(10,6))
+#    # Wide-field
+#    plt.subplot(1,2,1)
+#    plt.axis('off')
+#    img_Source = plt.imread(os.path.join(Data_folder[y], file))
+#    plt.imshow(img_Source, cmap='gray')
+#    plt.title('Source image',fontsize=15)
+#    # Prediction
+#    plt.subplot(1,2,2)
+#    plt.axis('off')
+#    img_Prediction = plt.imread(os.path.join(Results_folder[y], prediction_prefix+file))
+#    plt.imshow(img_Prediction, cmap='gray')
+#    plt.title('Prediction',fontsize=15)
+
+#  interact(show_prediction_mask);
+
+#@title 5) Rename and organize predictions
+os.chdir(path+'/filoSkeleton analysis/filoSkeleton cell predictions')
+names=sorted(glob.glob('*'+actin_channel+'.tif'))
+actin_channels,filo_channels,merged_names=[],[],[]
+for i in names:
+  temp=i.replace('Predicted_','')
+  actin_channels.append(temp)
+  os.rename(i,temp)
+  merged_names.append(temp.replace(actin_channel+'.tif','RGB.tif'))
+
+os.chdir(path+'/filoSkeleton analysis/filoSkeleton filopodia tip predictions')
+names=sorted(glob.glob('Predicted_*'))
+for i in names:
+  temp=i.replace('Predicted_','')
+  os.rename(i,temp)
+
+names=sorted(glob.glob('*'+filo_channel+'.tif'))
+for i in names:
+  filo_channels.append(i)
+
+
+#@title 6) Use the prediction masks to quantify filopodia
+print('--Analyzing images--')
+for q in range(0,len(actin_channels)):
+    print('--Analyzing '+str(q+1)+' / '+str(len(actin_channels))+' images--')
+    redValue = 10
+    blueValue = 1
+    greenValue = 1
+    os.chdir(path+'/filoSkeleton analysis/filoSkeleton cell source')
+    img=cv2.imread(actin_channels[q],-1)
+    os.chdir(path+'/filoSkeleton analysis/filoSkeleton merged')
+    img_show=cv2.imread(merged_names[q])
+    img_show=cv2.cvtColor(img_show, cv2.COLOR_BGR2RGB)
+    cols, rows = img_show.shape[0],img_show.shape[1]
+    brightness = np.sum(img_show) / (255 * cols * rows)
+    minimum_brightness = 0.10
+    ratio = brightness / minimum_brightness
+    img_show= cv2.convertScaleAbs(img_show, alpha = 1 / ratio, beta = 0)
+
+    img_show1=cv2.imread(merged_names[q])
+    img_show1=cv2.cvtColor(img_show1, cv2.COLOR_BGR2RGB)
+    cols, rows = img_show1.shape[0],img_show1.shape[1]
+    brightness = np.sum(img_show1) / (255 * cols * rows)
+    minimum_brightness = 0.50
+    ratio = brightness / minimum_brightness
+    img_show1= cv2.convertScaleAbs(img_show1, alpha = 1 / ratio, beta = 0)
+
+    os.chdir(path+'/filoSkeleton analysis/filoSkeleton cell source')
+    img_copy=cv2.imread(actin_channels[q])
+    img_copy[np.where(img_copy>0)]=0
+    img_copy2=np.copy(img_copy)
+    img_copy3=np.copy(img_copy)
+    img_copy4=np.copy(img_copy)
+    img_copy5=np.copy(img_copy)
+    img_copy6=np.copy(img_copy)
+    edgeContours = np.copy(img_copy)
+    stalk_img1=cv2.imread(actin_channels[q])
+    filo_img1=cv2.imread(actin_channels[q])
+    filo_img1[np.where(filo_img1>0)]=0
+    filo_img2=np.copy(filo_img1)
+    #red_img=cv2.imread(filo_channels[q],-1)
+
+    #read in masks
+    os.chdir(path+'/filoSkeleton analysis/filoSkeleton cell predictions')
+    body_stalk=cv2.imread(actin_channels[q],-1)
+    body,stalk=np.copy(body_stalk),np.copy(body_stalk)
+    body[np.where(body!=1)]=0
+    stalk[np.where(body_stalk!=2)]=0
+    thin_stalk=np.copy(stalk)
+    kernel = np.ones((7,7), np.uint8)
+    stalk=cv2.dilate(stalk,kernel)
+    os.chdir(path+'/filoSkeleton analysis/filoSkeleton filopodia tip predictions')
+    filo=cv2.imread(filo_channels[q],-1)
+    os.chdir(path+'/filoSkeleton analysis/filoSkeleton filopodia tip source')
+    filo_int=cv2.imread(filo_channels[q],-1)
+
+    #get cell contours
+    contours, hierarchy = cv2.findContours(body, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+    centroids,areas,perimeters,aspect_ratios,circularity,body_means,edgeCoordinates,cellColors=[],[],[],[],[],[],[],[]
+    for i in range(0,len(contours)):
+        M=cv2.moments(contours[i])
+        if M['m00']!=0:
+            area=cv2.contourArea(contours[i])/(pixel_micron**2)
+            if area>25:
+                centroid=(int(M['m10']/M['m00']),int(M['m01']/M['m00']))
+                centroids.append(centroid)
+                area=cv2.contourArea(contours[i])/(pixel_micron**2)
+                areas.append(area)
+                img_copy5=cv2.drawContours(img_copy5,contours,i,(147,147,147),-1)
+                cv2.drawContours(img_copy5,contours,i,(0,0,0,),5)
+                body_val=filo_int[np.where((img_copy5==list((147,147,147))).all(axis=2))]
+                body_vals=[]
+                for val in body_val:
+                  vals=[str(val)]
+                  if len(vals)==1:
+                    body_vals.append(val)
+                  else:
+                    body_vals.append(val[2])
+                body_means.append(np.mean(body_vals))
+                perimeter=cv2.arcLength(contours[i],True)/(pixel_micron)
+                perimeters.append(perimeter)
+                rect=cv2.minAreaRect(contours[i])
+                wh=rect[1]
+                w=np.min(wh)
+                h=np.max(wh)
+                aspect_ratios.append(float(w)/h)
+                circularity.append((4*math.pi*area)/(perimeter**2))
+                img_copy2=cv2.drawContours(np.copy(img_copy),contours,i,white,-1)
+                img_show=cv2.drawContours(img_show,contours,i,aqua,-1)
+                img_copy2=cv2.drawContours(img_copy2,contours,i,white,3)
+                img_copy3=cv2.drawContours(img_copy3,contours,i,aqua,1)
+                edgeContours = cv2.drawContours(edgeContours,contours,i,(redValue,greenValue,blueValue),1)
+                edgeCoordinates.append(np.where((edgeContours==list((redValue,greenValue,blueValue))).all(axis=2)))
+                cellColors.append((redValue,greenValue,blueValue))
+                redValue = redValue +1
+                greenValue = greenValue +1
+                blueValue = blueValue +1
+
+    #get all filo contours
+    filo[np.where((img_copy2==list(white)).all(axis=2))]=0
+    all_filo=np.copy(filo)
+
+    contours, hierarchy = cv2.findContours(all_filo, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+    filo_centroids,filo1_tip_body_ratio,filo1_nums,filo1_len,filo1_cent,filo1_coord,filo1_cell,filo1_val,filo1_cell_intensity=[],[],[],[],[],[],[],[],[]
+    c=1
+    
+    filo1_i_num=[]
+    
+    for i in range(0,len(contours)):
+        M=cv2.moments(contours[i])
+        if M['m00']!=0:            
+          filo_centroid=(int(M['m10']/M['m00']),int(M['m01']/M['m00']))
+          filo_centroids.append(centroid)
+          filo_len=0
+          filo_img1=np.copy(filo_img2)
+          cv2.drawContours(filo_img1,contours,i,red,-1)
+          pts = np.where((filo_img1==list(red)).all(axis=2))
+          #insert tip intensity here
+          tip_intensity = np.mean(filo_int[pts])
+          tip_intensity = np.round(tip_intensity,2)
+          intensity1=(filo[pts[0],pts[1]])
+          intensity2=(stalk[pts[0],pts[1]])
+          
+          #begin stalk tracing
+          if 1 in intensity1 and 2 in intensity2:
+              cv2.drawContours(img_show,contours,i,red,-1)
+              #cv2.drawContours(img_copy7,contours,i,red,-1)
+              #while body not detected
+              
+              body_detected = False
+              stalk_detection_failure = False
+              stalk_detection_trial = 0
+              detection_trial_num = 0
+              prev_centroid = 0
+              test=[]
+              cellColor=False
+              
+              img_copy9=np.copy(img_copy6)
+              stalk_detection_centroids = []
+              
+              while body_detected == False:
+                detection_trial_num = detection_trial_num + 1
+                if detection_trial_num > 30:
+                    cv2.drawContours(img_show,contours,i,blue,-1)
+                    #print(i)
+                    break
+                x1,y1=filo_centroid[0],filo_centroid[1]
+                body_pts=np.where((img_copy3==list(aqua)).all(axis=2))
+                x2,y2=body_pts[1],body_pts[0]
+                body_x2, body_y2 = x2, y2
+                dist=[]
+                for j in range(len(x2)):
+                  dist.append(get_distance(x2[j],x1,y2[j],y1))
+                shortest_len=dist[np.argmin(dist)]/pixel_micron
+                shortest_cent=x2[np.argmin(dist)],y2[np.argmin(dist)]
+                x1,y1=shortest_cent
+                dist=[]
+                for j in range(len(centroids)):
+                  x2,y2=centroids[j]
+                  dist.append(get_distance(x2,x1,y2,y1))
+             ##   closest_cell=np.argmin(dist)                
+                img_copy7 = np.copy(img_copy6)
+                img_copy8 = np.copy(all_filo)
+                img_copy8[np.where(img_copy8 != 0)] = 0
+                #draw a circle around tip
+                cv2.circle(img_copy7,filo_centroid,8,pink,2)
+                if stalk_detection_failure == True:
+                    stalk_detection_trial = stalk_detection_trial + 1
+                    stalk_detection_failure_radius = 8 + stalk_detection_trial
+                    if stalk_detection_failure_radius <= 13:
+                        cv2.circle(img_copy7,filo_centroid,stalk_detection_failure_radius,pink,2)
+                tip_pts = np.where((img_copy7==list(pink)).all(axis=2))
+                #body_intensity = (body[tip_pts[0],tip_pts[1]])
+                body_intensity = (edgeContours[tip_pts[0],tip_pts[1]])
+                for colors in cellColors:
+                    if colors in body_intensity:
+                        cellColor=colors
+                        #break
+
+                        
+                stalk_intensity = (thin_stalk[tip_pts[0],tip_pts[1]])
+                #if neither body nor stalk are detected - increase radius
+                intensity_check_counter=1
+                radius_pixel_input=8
+                    
+                #if body nor stalk is detected - expand radius to find the stalk
+                while 1 not in body_intensity and len(np.where(stalk_intensity==2)[0]) < 6:
+                    if intensity_check_counter > 30:
+                        break
+                    radius_pixel_input= radius_pixel_input+1
+                    cv2.circle(img_copy7,filo_centroid,radius_pixel_input,pink,2)
+                    tip_pts = np.where((img_copy7==list(pink)).all(axis=2))
+                    body_intensity = (body[tip_pts[0],tip_pts[1]])
+                    stalk_intensity = (thin_stalk[tip_pts[0],tip_pts[1]])
+                    intensity_check_counter=intensity_check_counter+1
+                #if body is detected nearby
+                
+                
+                if cellColor != False:
+                    cv2.line(img_copy9,filo_centroid,shortest_cent,yellow,3)
+     #               filo1_len.append(shortest_len)
+     #               filo1_cent.append(shortest_cent)
+                    
+                    closest_cell = cellColors.index(cellColor)
+                    filo1_cell.append(closest_cell+1)
+                    filo1_cell_intensity.append(body_means[closest_cell])
+                    reverse_coord=(filo_centroid[1],filo_centroid[0])
+                    if type(filo_int[reverse_coord])=='list':
+                      #filo1_val.append(str(filo_int[reverse_coord][2]))
+                      #filo1_tip_body_ratio.append(str(filo_int[reverse_coord][2]/body_means[closest_cell]))
+                      filo1_val.append(tip_intensity)
+                      filo1_tip_body_ratio.append(tip_intensity/body_means[closest_cell])
+                    else:
+                      #filo1_val.append(str(filo_int[reverse_coord]))
+                      #filo1_tip_body_ratio.append(str(filo_int[reverse_coord]/body_means[closest_cell]))
+                      filo1_val.append(tip_intensity)
+                      filo1_tip_body_ratio.append(tip_intensity/body_means[closest_cell])
+                    filo1_coord.append(filo_centroid)
+                    temp_length = get_distance(shortest_cent[0], filo_centroid[0], shortest_cent[1], filo_centroid[1])
+                    filo_len = filo_len + temp_length
+                    cv2.drawContours(filo_img1,contours,i,gray3,-1)
+                    c=c+1
+                    body_detected = True
+                #if body isn't detected, but stalk is
+                elif 2 in stalk_intensity:
+                    #get x y coordinates of the pixels that intersect pink tip radius and a thin stalk
+                    tip_stalk_intersection = np.where((img_copy7==list(pink)).all(axis=2) & (thin_stalk==2))
+                    img_copy8[tip_stalk_intersection] = 1
+                    
+                    
+                    
+                    
+                    if detection_trial_num > 1 and prev_centroid != 0:
+                        cv2.circle(img_copy8,prev_centroid,2,0,2)
+                    
+                    
+                    
+                    #draw contours
+                    #if 1 contour then move filo_centroid there
+                    #if >1 contour pick the contour closest to the closest cortex centroid calculated earlier
+                    tipStalkContours, hierarchy = cv2.findContours(img_copy8, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+                    tipStalkCentroids, tipStalkDist = [],[]
+                    M1s=[]
+                    for cont in range(len(tipStalkContours)):
+                        M1=cv2.moments(tipStalkContours[cont])
+                        M1s.append(M1['m00'])
+                        if M1['m00']!=0:
+                          tempCentroid = (int(M1['m10']/M1['m00']),int(M1['m01']/M1['m00']))
+                          tipStalkCentroids.append(tempCentroid)
+                          tipStalkDist.append(get_distance(x2=shortest_cent[0],x1=tempCentroid[0],y2=shortest_cent[1],y1=tempCentroid[1]))
+  #                  print(i)
+  #                  print(tipStalkCentroids)
+  #                  print(tipStalkDist)
+                    M1s= [value for value in M1s if value != 0]
+                    if len(M1s) > 0:
+                        tipStalkCentroid=tipStalkCentroids[tipStalkDist.index(min(tipStalkDist))]
+                        #get distance between tipStalkCentroid and filocentroid
+                        temp_length= get_distance(tipStalkCentroid[0], filo_centroid[0], tipStalkCentroid[1], filo_centroid[1])
+                        filo_len = filo_len + temp_length
+                        cv2.line(img_copy9,filo_centroid,tipStalkCentroid,yellow,3)
+                        stalk_detection_failure = False
+                        prev_centroid = filo_centroid
+                        filo_centroid = tipStalkCentroid
+                    else:
+                        stalk_detection_failure = True
+                        
+                else:
+                    #print('noStalkDetected')
+                    break
+                #get yellow line pts
+                yellow_pts = np.where((img_copy9==list(yellow)).all(axis=2))
+                #draw yellow line on img_show
+                img_show[yellow_pts] = yellow
+              
+              if body_detected == True:  
+                  filo1_len.append(filo_len/pixel_micron)
+                  filo1_i_num.append(i)
+              
+
+
+                    
+                    
+    #                if len(tipStalkContours) == 1:
+    #                    M1=cv2.moments(tipStalkContours[0])
+    #                    if M1['m00']!=0:
+    #                      tipStalkCentroid=(int(M1['m10']/M1['m00']),int(M1['m01']/M1['m00']))
+    #                      cv2.line(img_copy9,filo_centroid,tipStalkCentroid,yellow,3)
+    #                      filo_centroid = tipStalkCentroid
+    #                elif len(tipStalkContours) >1:
+    #                    tipStalkCentroids=[]
+    #                    tipStalkDist=[]
+    #                    for cont in range(0,len(tipStalkContours)):
+    #                        M1=cv2.moments(tipStalkContours[cont])
+    #                        if M1['m00']!=0:
+    #                          tipStalkCentroids.append((int(M1['m10']/M1['m00']),int(M1['m01']/M1['m00'])))
+    #                          tipStalkDist.append(get_distance(x2=shortest_cent[0],x1=filo_centroid[0],y2=shortest_cent[1],y1=filo_centroid[1]))
+    #                          tipStalkCentroidn=tipStalkCentroids[tipStalkDist.index(min(tipStalkDist))]
+    #                          cv2.line(img_copy9,filo_centroid,tipStalkCentroid,yellow,3)
+    #                          filo_centroid = tipStalkCentroid
+                              
+                                
+                              
+                                
+    #                          tipStalkCentroid=(int(M1['m10']/M1['m00']),int(M1['m01']/M1['m00']))
+    #                          cv2.line(img_copy9,filo_centroid,tipStalkCentroid,yellow,3)
+    #                          filo_centroid = tipStalkCentroid
+                            
+                            
+           #     plt.imshow(img_copy8)
+           #     plt.imshow(img_copy7)
+                
+                    
+                    
+            #elif 1 stalk position detected
+            #draw line to new stalk position and repeat
+            #elif >1 stalk positions detected
+            #remove the previous position
+            #find the distance from both stalk positions - find the closest to the body - move to that new position and repeat
+            #insurance - if this process goes over x loops - mark tip as blue and end
+            
+            
+            
+            
+
+    #summarize filo information
+    rootName = actin_channels[q].replace(actin_channel+'.tif','')
+    filo1_protein=np.repeat(filo_name,len(filo1_len))
+    filo_names=np.repeat(rootName,len(filo1_len))
+    avg_len=np.mean(filo1_len)
+
+    #filo_output dataframe
+    filo1_protein=np.repeat(filo_name,len(filo1_len))
+    filo_names=np.repeat(rootName,len(filo1_len))
+
+
+    filo1_={'Experiment Name':filo_names,'Cell Assignment':filo1_cell,'Cell Body Average Intensity':filo1_cell_intensity,'Length (um)':filo1_len,'Filo Tip Centroid Coordinates':filo1_coord,'Filo Tip Intensity':filo1_val,'Filo Tip/Cell Body Ratio':filo1_tip_body_ratio,'Filopodia Proteins Present':filo1_protein}
+    filo_output=pd.DataFrame(filo1_)
+
+    #summarize and prepare for result outputs
+    filo1_cell_ind=np.asarray(filo1_cell)
+    final1_2,final1,final2,finalprojection=[],[],[],[]
+    for i in range(1,len(centroids)+1):
+      final1.append(len(np.where(filo1_cell_ind==i)[0]))
+    cell_num=list(range(1,len(centroids)+1))
+
+    filos1_2_micron=[i/j for i,j in zip(final1_2,perimeters)]
+    filos1_micron=[i/j for i,j in zip(final1,perimeters)]
+    filos2_micron=[i/j for i,j in zip(final2,perimeters)]
+    projection_micron=[i/j for i,j in zip(finalprojection,perimeters)]
+
+    #combine lists into a pandas df and export
+    os.chdir(path+'/filoSkeleton analysis')
+    if not os.path.exists('filoSkeleton output'):
+        os.makedirs('filoSkeleton output')
+    exp_num_cell=np.repeat(rootName,len(centroids))
+    cell_num=[]
+    for i in range(0,len(centroids)):
+      cell_num.append(i+1)
+
+    #calculate filopodia normalized to perimeter
+    filos_perimeter = [i/j for i,j in zip(final1,perimeters)]
+
+    #finish combining lists
+    cell_dict={'Experiment Name':exp_num_cell,'Cell Number':cell_num,'Aspect Ratio':aspect_ratios,'Circularity':circularity,'Average Body Intensity':body_means,'Filos/Cell ('+filo_name+')':final1,'Filos/Perimeter (Filos/micron)':filos_perimeter, 'Avg Filo Length (um)':avg_len,'Cell Area (um^2)':areas,'Perimeter (um)':perimeters}
+    cell_output=pd.DataFrame(cell_dict)
+    cell_output.to_csv('filoSkeleton output/'+str(rootName.replace(actin_channel+'.tif',''))+'_Cell_Output_.csv',index=False)
+    filo_output.to_csv('filoSkeleton output/'+str(rootName.replace(actin_channel+'.tif',''))+'_Filo_Output_.csv',index=False)
+
+    #make annotation
     fig, final=plt.subplots(1,2)
-    final[0].imshow(img)
-    final[0].set_title('Original Image')
+    final[0].imshow(img_show1)
+    final[0].set_title('Merged')
     final[0].axis('off')
-    final[1].imshow(img_copy3)
-    final[1].set_title('filoTips')
+    final[1].imshow(img_show)
+    final[1].set_title('filoSkeleton')
     final[1].axis('off')
-    plt.savefig('filoTips_Output/'+str(images[q])+'_Annotation.tiff',dpi=Annotation_DPI)
+    plt.savefig('filoSkeleton output/'+str(rootName.replace(actin_channel+'.tif',''))+'_Annotation.tiff',dpi=Annotation_DPI)
 
-
-# ### Collect and organize the analysis
-
-# In[7]:
-
-
-#@title 6) Pool together the analysis
-os.chdir(path+'/filoTips analysis')
-cell_outputs=sorted(glob.glob("filoTips_Output/*Cell_Output_.csv"))
-filo_outputs=sorted(glob.glob('filoTips_Output/*Filo_Output_.csv'))
+#@title 7) Pool together the analysis
+os.chdir(path+'/filoSkeleton analysis')
+cell_outputs=sorted(glob.glob("filoSkeleton output/*Cell_Output_.csv"))
+filo_outputs=sorted(glob.glob('filoSkeleton output/*Filo_Output_.csv'))
 cell_dfs = (pd.read_csv(f) for f in cell_outputs)
 cell_dfs = pd.concat(cell_dfs, ignore_index=True)
 filo_dfs = (pd.read_csv(f) for f in filo_outputs)
 filo_dfs = pd.concat(filo_dfs, ignore_index=True)
-cell_dfs.to_csv('filoTips_Output/Total_Cell_Output.csv',index=False)
-filo_dfs.to_csv('filoTips_Output/Total_Filo_Output.csv',index=False)
+cell_dfs.to_csv('filoSkeleton output/Total_Cell_Output.csv',index=False)
+filo_dfs.to_csv('filoSkeleton output/Total_Filo_Output.csv',index=False)
 
-
-# ### Data visualization (if statistical summary enabled)
-
-# In[8]:
-
-
-#@title 7) Optional data visualization
-cell_file=pd.read_csv(path+'/filoTips analysis/filoTips_Output/Total_Cell_Output.csv')
-
-if not os.path.exists(path+'/filoTips analysis/filoTips_Output/Plots'):
-        os.makedirs(path+'/filoTips analysis/filoTips_Output/Plots')
+#@title 8) Optional data visualization
+cell_file=pd.read_csv(path+'/filoSkeleton analysis/filoSkeleton output/Total_Cell_Output.csv')
+if not os.path.exists(path+'/filoSkeleton analysis/filoSkeleton output/Plots'):
+        os.makedirs(path+'/filoSkeleton analysis/filoSkeleton output/Plots')
 
 if comparative_analysis ==True:
   prompt1=[Condition_1,Condition_2,Condition_3,Condition_4]
@@ -1436,7 +1599,7 @@ if comparative_analysis ==True:
     if '' in prompt1:
       prompt1.remove('')
   prompt1=str(len(prompt1))
-  parameter=['Aspect Ratio','Cortex_Body','Leading Edge_Body','SideRear_Body','Leading Edge_Body','Filo Number','Cell Area (um^2)','Perimeter (um)']
+  parameter=['Aspect Ratio','Circularity','Filos/Cell ('+filo_name+')','Filos/Perimeter (Filos/micron)','Avg Filo Length (um)','Cell Area (um^2)','Perimeter (um)']
 
   data= cell_file
   for t in range(0,len(parameter)):
@@ -1449,19 +1612,19 @@ if comparative_analysis ==True:
           data.insert(0,'Condition',0)
           data['Condition'][ind1]=Condition_1
           data['Condition'][ind2]=Condition_2
-      set1=data.loc[data['Condition'] == Condition_1].reset_index(drop=True)
-      set2=data.loc[data['Condition'] == Condition_2].reset_index(drop=True)
-      
+      set1=data.loc[data['Condition'].str.contains(Condition_1)].reset_index(drop=True)
+      set2=data.loc[data['Condition'].str.contains(Condition_2)].reset_index(drop=True)
+
       print('')
       print('--'+parameter[t]+'--')
-      print('-----Mann-Whitney U Test-----')
+      print('--Mann-Whitney U Test--')
       kruskal=stats.mannwhitneyu(set1[parameter[t]],set2[parameter[t]])
       print(kruskal)
       print(' ')
 
       #t-test
       print('--'+parameter[t]+'--')
-      print('-----T-test-----')
+      print('--T-test--')
       t_test=rp.ttest(group1=set1[parameter[t]],group1_name=Condition_1,
               group2=set2[parameter[t]],group2_name=Condition_2)
       print(t_test)
@@ -1473,7 +1636,7 @@ if comparative_analysis ==True:
       for i in range(0,len(means)):
           means_stds.append(str(means[i])+'±'+str(stds[i]))
       nums=[len(set1[parameter[t]]),len(set2[parameter[t]])]
-      
+
       #violin plot
       pal=sns.color_palette()
       palp=sns.color_palette("husl",8)
@@ -1486,10 +1649,10 @@ if comparative_analysis ==True:
           ax1.annotate(str(means_stds[i]+'\nn='+str(nums[i])),xy=(means[i],i),horizontalalignment='center',verticalalignment='center')
       ax1.xaxis.set_label_position('top')
       ax1.xaxis.tick_top()
-      plt.show()
       temp=parameter[t].split('(')[0]
-      fig.savefig('filoTips_Output/Plots/'+temp+ '.tiff',dpi=dpi,bbox_inches='tight')
-      
+      temp=temp.replace('/','_')
+      fig.savefig(path+'/filoSkeleton analysis/filoSkeleton output/Plots/'+temp+ '.tiff',dpi=dpi,bbox_inches='tight')
+
     if prompt1=='3':
       #setup
       #data=data.dropna()
@@ -1501,17 +1664,20 @@ if comparative_analysis ==True:
           data['Condition'][ind1]=Condition_1
           data['Condition'][ind2]=Condition_2
           data['Condition'][ind3]=Condition_3
-      set1=data.loc[data['Condition'] == Condition_1].reset_index(drop=True)
-      set2=data.loc[data['Condition'] == Condition_2].reset_index(drop=True)
-      set3=data.loc[data['Condition'] == Condition_3].reset_index(drop=True)
-      
+      set1=data.loc[data['Condition'].str.contains(Condition_1)].reset_index(drop=True)
+      set2=data.loc[data['Condition'].str.contains(Condition_2)].reset_index(drop=True)
+      set3=data.loc[data['Condition'].str.contains(Condition_3)].reset_index(drop=True)
+
       #kruskal-wallis
+      print('')
+      print('--'+parameter[t]+'--')
       print('-----Kruskal-Wallis Test-----')
       kruskal=stats.kruskal(set1[parameter[t]],set2[parameter[t]],set3[parameter[t]])
       print(kruskal)
       print(' ')
-      
+
       #ANOVA
+      print('--'+parameter[t]+'--')
       print('-----ANOVA-----')
       an=stats.f_oneway(set1[parameter[t]],set2[parameter[t]],set3[parameter[t]])
       vals=data[parameter[t]].tolist()
@@ -1526,7 +1692,7 @@ if comparative_analysis ==True:
       for i in range(0,len(means)):
           means_stds.append(str(means[i])+'±'+str(stds[i]))
       nums=[len(set1[parameter[t]]),len(set2[parameter[t]]),len(set3[parameter[t]])]
-      
+
       #violin plot
       pal=sns.color_palette()
       palp=sns.color_palette("husl",8)
@@ -1539,11 +1705,11 @@ if comparative_analysis ==True:
           ax1.annotate(str(means_stds[i]+'\nn='+str(nums[i])),xy=(means[i],i),horizontalalignment='center',verticalalignment='center')
       ax1.xaxis.set_label_position('top')
       ax1.xaxis.tick_top()
-      plt.show()
       temp=parameter[t].split('(')[0]
-      fig.savefig('filoTips_Output/Plots/'+temp+ '.tiff',dpi=dpi,bbox_inches='tight')
-      
-      
+      temp=temp.replace('/','_')
+      fig.savefig(path+'/filoSkeleton analysis/filoSkeleton output/Plots/'+temp+ '.tiff',dpi=dpi,bbox_inches='tight')
+
+
     if prompt1=='4':
       #setup
       #data=data.dropna()
@@ -1557,18 +1723,21 @@ if comparative_analysis ==True:
           data['Condition'][ind2]=Condition_2
           data['Condition'][ind3]=Condition_3
           data['Condition'][ind4]=Condition_4
-      set1=data.loc[data['Condition'] == Condition_1].reset_index(drop=True)
-      set2=data.loc[data['Condition'] == Condition_2].reset_index(drop=True)
-      set3=data.loc[data['Condition'] == Condition_3].reset_index(drop=True)
-      set4=data.loc[data['Condition'] == Condition_4].reset_index(drop=True)
-    
+      set1=data.loc[data['Condition'].str.contains(Condition_1)].reset_index(drop=True)
+      set2=data.loc[data['Condition'].str.contains(Condition_2)].reset_index(drop=True)
+      set3=data.loc[data['Condition'].str.contains(Condition_3)].reset_index(drop=True)
+      set4=data.loc[data['Condition'].str.contains(Condition_4)].reset_index(drop=True)
+
       #kruskal-wallis
+      print('')
+      print('--'+parameter[t]+'--')
       print('-----Kruskal-Wallis Test-----')
       kruskal=stats.kruskal(set1[parameter[t]],set2[parameter[t]],set3[parameter[t]],set4[parameter[t]])
       print(kruskal)
       print(' ')
-      
+
       #ANOVA
+      print('--'+parameter[t]+'--')
       print('-----ANOVA-----')
       an=stats.f_oneway(set1[parameter[t]],set2[parameter[t]],set3[parameter[t]],set4[parameter[t]])
       vals=data[parameter[t]].tolist()
@@ -1583,7 +1752,7 @@ if comparative_analysis ==True:
       for i in range(0,len(means)):
           means_stds.append(str(means[i])+'±'+str(stds[i]))
       nums=[len(set1[parameter[t]]),len(set2[parameter[t]]),len(set3[parameter[t]]),len(set4[parameter[t]])]
-      
+
       #violin plot
       pal=sns.color_palette()
       palp=sns.color_palette("husl",8)
@@ -1596,23 +1765,17 @@ if comparative_analysis ==True:
           ax1.annotate(str(means_stds[i]+'\nn='+str(nums[i])),xy=(means[i],i),horizontalalignment='center',verticalalignment='center')
       ax1.xaxis.set_label_position('top')
       ax1.xaxis.tick_top()
-      plt.show()
       temp=parameter[t].split('(')[0]
-      fig.savefig('filoTips_Output/Plots/'+temp+ '.tiff',dpi=dpi,bbox_inches='tight')
+      temp=temp.replace('/','_')
+      fig.savefig(path+'/filoSkeleton analysis/filoSkeleton output/Plots/'+temp+ '.tiff',dpi=dpi,bbox_inches='tight')
 
-
-# ### Download filoTips locally
-
-# In[9]:
-
-
-#@title 8) Download filoTips_Output locally
-os.chdir(path+'/filoTips analysis/filoTips_Output')
+#@title 9) Organize files
+os.chdir(path+'/filoSkeleton analysis/filoSkeleton output')
 if not os.path.exists('Annotations'):
         os.makedirs('Annotations')
 if not os.path.exists('Individual Experiments'):
         os.makedirs('Individual Experiments')
-        
+
 annot_files=glob.glob('*.tiff')
 ind_files=glob.glob('*_.csv')
 
@@ -1621,7 +1784,4 @@ for i in ind_files:
 for i in annot_files:
   os.replace(i,'Annotations/'+i)
 
-os.chdir(path+'/filoTips analysis')
-
-print('-- filoTips analysis complete --')
-
+print('--filoSkeleton analysis complete--')
