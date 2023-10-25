@@ -30,6 +30,9 @@ The most common source of error for new users is properly naming their files. If
 #### Casey Eddington
 eddin022@umn.edu
 
+#### Jessica Schwartz
+jaschwar@umn.edu
+
 #### Margaret A. Titus
 titus004@umn.edu
 
