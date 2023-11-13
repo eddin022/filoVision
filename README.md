@@ -14,6 +14,12 @@ Anyone who spends a considerable amount of time quantifying filopodia and common
 #### 3. Plug a custom model into one of the filoVision notebooks
 #### 4. Run a filoVision notebook on future data for automated filopodia quantitation
 
+### Acquiring filoVision Models and Train/Test Data
+#### Automatically
+If a default filoVision model is selected during filoVision analysis, the model is automatically downloaded. There is no need for the user to take additional steps.
+#### Bioimage.io or Zenodo
+The default filoVision models and train/test data will also be available on Bioimage.IO and Zenodo. Currently they are under review, but links will be posted here as they become available on these platforms.
+
 ### Dependencies
 #### ZeroCostDL4Mic
 Training a deep learning model on representative data is crucial for proper accuracy with just about any deep learning tool. Training these models can be challenging for those with minimal experience with libraries like TensorFlow and Keras. Thus, we exploited the impressive "ZeroCostDL4Mic" framework to empower anyone with the ability to train their own model and plug it into filoVision.
