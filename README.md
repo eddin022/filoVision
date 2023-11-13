@@ -9,10 +9,18 @@ filoVision contains two Google Colab notebooks, ["filoTips"](https://colab.resea
 Anyone who spends a considerable amount of time quantifying filopodia and commonly expresses fluorescent tip markers in their experiments. Users are free to use our default models, but we recommend they tune our models to their own data with transfer learning via the ZeroCostDL4Mic platform.
 
 ## Getting Started
-#### 1. Trial run a filoVision notebook using the evaluation data and default models (not required - click 'Code' and 'Download Zip' to download images)
-#### 2. Train custom filoVision models on the user's data with the [ZeroCostDL4Mic](https://github.com/HenriquesLab/ZeroCostDL4Mic) framework
-#### 3. Plug a custom model into one of the filoVision notebooks
-#### 4. Run a filoVision notebook on future data for automated filopodia quantitation
+### Recommended trial run using the example data provided here
+#### 1. Click 'Code' and 'Download Zip' to download the repository which contains the example data
+#### 2. Click the filoTips or filoSkeleton Google Colab link above
+#### 3. Drag the example data into the "Files" section of the notebook
+#### 4. Provide the requested inputs
+#### 5. Click "Runtime" and "Run All"
+#### 6. Your filoVision analysis will be downloaded locally to your system once complete
+
+### Analyzing user data
+#### 1. Follow above, but with user data instead of example data
+#### 2. If using a tuned model, select "Custom Model" and provide a Google Drive link to the model
+#### 3. If the user wants to tune our models to their data, they should use the [ZeroCostDL4Mic](https://github.com/HenriquesLab/ZeroCostDL4Mic) platform
 
 ## Acquiring filoVision Models and Train/Test Data
 #### Automatically
