@@ -14,7 +14,7 @@ Anyone who spends a considerable amount of time quantifying filopodia and common
 #### 3. Plug a custom model into one of the filoVision notebooks
 #### 4. Run a filoVision notebook on future data for automated filopodia quantitation
 
-### Acquiring filoVision Models and Train/Test Data
+## Acquiring filoVision Models and Train/Test Data
 #### Automatically
 If a default filoVision model is selected during filoVision analysis, the model is automatically downloaded. There is no need for the user to take additional steps.
 #### Bioimage.io or Zenodo
