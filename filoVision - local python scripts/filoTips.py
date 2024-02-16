@@ -1277,7 +1277,7 @@ for q in range(0,len(images)):
           ind=distances.index(min(distances))
           length=min(distances)/pixel_micron
 
-          if length <10:
+          if length >0 and length <10:
               filo_centroids.append(centroid)
               filo_lengths_pix.append(min(distances))
               filo_lengths_um.append(min(distances)/pixel_micron)
